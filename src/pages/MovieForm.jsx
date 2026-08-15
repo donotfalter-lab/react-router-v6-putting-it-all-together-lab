@@ -1,15 +1,15 @@
 import { useState } from "react"
 import { v4 as uuidv4 } from 'uuid'
+import { useNavigate, useOutletContext } from "react-router-dom";
 
 function MovieForm() {
   const [title, setTitle] = useState("")
   const [time, setTime] = useState("")
   const [genres, setGenres] = useState("")
+  const navigate = useNavigate();
+  const { director, setDirectors } = useOutletContext();
 
-  // Replace me
-  const director = null
-  
-  if (!director) { return <h2>Director not found.</h2>}
+  if (!director) { return <h2>Director not found.</h2> }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -19,21 +19,20 @@ function MovieForm() {
       time: parseInt(time),
       genres: genres.split(",").map((genre) => genre.trim()),
     }
-    fetch(`http://localhost:4000/directors/${id}`, {
+    const updatedMovies = [...director.movies, newMovie];
+
+    fetch(`http://localhost:4000/directors/${director.id}`, {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({movies: [...director.movies, newMovie]})
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ movies: updatedMovies })
     })
     .then(r => {
       if (!r.ok) { throw new Error("failed to add movie") }
       return r.json()
     })
     .then(data => {
-      console.log(data)
-      // handle context/state changes
-      // navigate to newly created movie page
+      setDirectors(prev => prev.map(d => (d.id === data.id ? data : d)));
+      navigate(`/directors/${director.id}/movies/${newMovie.id}`);
     })
     .catch(console.log)
   }
@@ -70,4 +69,3 @@ function MovieForm() {
 }
 
 export default MovieForm
-
